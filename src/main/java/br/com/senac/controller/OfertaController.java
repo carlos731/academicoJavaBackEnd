@@ -1,0 +1,70 @@
+package br.com.senac.controller;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import javax.validation.Valid;
+
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import br.com.senac.controller.request.OfertaRequest;
+import br.com.senac.controller.response.OfertaResponse;
+import br.com.senac.model.dtos.OfertaDTO;
+import br.com.senac.service.OfertaService;
+
+@RestController
+@RequestMapping("/api/oferta")
+public class OfertaController {
+
+	@Autowired
+	private OfertaService ofertaService;
+	
+	@PostMapping
+	public ResponseEntity<OfertaResponse> adicionar(@Valid @RequestBody OfertaRequest ofertaReq){
+		ModelMapper mapper = new ModelMapper();
+		OfertaDTO ofertaDto = mapper.map(ofertaReq, OfertaDTO.class);
+		ofertaDto = ofertaService.adicionar(ofertaDto);
+		return new ResponseEntity<>(mapper.map(ofertaDto, OfertaResponse.class), HttpStatus.CREATED);
+	}
+	
+	@GetMapping
+	public ResponseEntity<List<OfertaResponse>> obterTodos(){
+		List<OfertaDTO> ofertas = ofertaService.obterTodos();
+		ModelMapper mapper = new ModelMapper();
+		List<OfertaResponse> resposta = ofertas.stream().map(oferta -> mapper.map(oferta, OfertaResponse.class)).collect((Collectors.toList()));
+		return new ResponseEntity<>(resposta, HttpStatus.OK);
+	}
+	
+	@GetMapping("/{id}")
+	public ResponseEntity<Optional<OfertaResponse>> obterPorId(@PathVariable Integer id){
+		Optional<OfertaDTO> dto = ofertaService.obterPorId(id);
+		OfertaResponse oferta = new ModelMapper().map(dto.get(), OfertaResponse.class);
+		return new ResponseEntity<>(Optional.of(oferta), HttpStatus.OK);
+	}
+	
+	@PutMapping("/{id}")
+	public ResponseEntity<OfertaResponse> atualizar(@Valid @RequestBody OfertaRequest ofertaReq, @PathVariable Integer id){
+		ModelMapper mapper = new ModelMapper();
+		OfertaDTO ofertaDto = mapper.map(ofertaReq, OfertaDTO.class);
+		ofertaDto = ofertaService.atualizar(id, ofertaDto);
+		return new ResponseEntity<>(mapper.map(ofertaDto, OfertaResponse.class), HttpStatus.OK);
+	}
+	
+	@DeleteMapping("/{id}")
+	public ResponseEntity<?> deletar(@PathVariable Integer id){
+		ofertaService.deletar(id);
+		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+	}
+}
